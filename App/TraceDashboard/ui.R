@@ -10,13 +10,14 @@ ui<- dashboardPage(
       menuItem("Map", tabName = "map", icon = icon("map")),
       menuItem("Time Chart", tabName = "chart", icon = icon("chart")),
       menuItem("Data Table", tabName = "table", icon = icon("table")),
-      checkboxGroupInput("years",
-                         "Years",
-                         c(2017:2013),
-                         selected = c(2017:2013)),
+      # checkboxGroupInput("years",
+      #                    "Years",
+      #                    c(2017:2013),
+      #                    selected = c(2017:2013)),
+      sliderInput("years", "Years", min = 2013, max = 2017, value = c(2013, 2017), step = 1, sep = ""),
       radioButtons("source_recovery",
                    "Choose Data to Display on Map",
-                   choices = c("Where Guns Are Going", "Where Guns Are Coming From")),
+                   choices = c("Where Guns Are Coming From", "Where Guns Are Going")),
       selectizeInput("state",
                     "Select Recovery State",
                     selected = "DISTRICT OF COLUMBIA",
@@ -26,7 +27,12 @@ ui<- dashboardPage(
   ),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "map"),
+      tabItem(tabName = "map",
+              fluidPage(
+                fluidRow(
+                  box(plotOutput("map"))),
+                fluidRow(
+                  box(tableOutput("short_table"), title = "Top 5")))),
       tabItem(tabName = "chart"),
       tabItem(tabName = "table",
               fluidPage(
