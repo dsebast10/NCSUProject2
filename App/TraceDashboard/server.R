@@ -1,5 +1,6 @@
 library(shiny)
 library(tidyverse)
+library(magrittr)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
@@ -23,6 +24,39 @@ shinyServer(function(input, output, session) {
     }
     return(trace_data)
   })
+  
+  tabularData <- reactive({
+    if(input$source_recovery == 'Where Guns Are Going' & input$include_state == F) {
+      trace_data <- traces %>% 
+        filter(SourceState == input$state, Year %in% input$years) %>%
+        group_by(RecoveryState) %>% 
+        summarize(Guns = sum(Guns)) %>%
+        mutate(`Percent of Total` = Guns/sum(Guns)*100) %>%
+        arrange(desc(Guns))
+    } else if(input$source_recovery == 'Where Guns Are Going' & input$include_state == T){
+      trace_data <- traces %>% 
+        filter(SourceState == input$state,RecoveryState != input$state, Year %in% input$years) %>%
+        group_by(RecoveryState) %>% 
+        summarize(Guns = sum(Guns)) %>%
+        mutate(`Percent of Total` = Guns/sum(Guns)*100) %>%
+        arrange(desc(Guns))
+    } else if(input$source_recovery == 'Where Guns Are Coming From' & input$include_state == F){
+      trace_data <- traces %>% 
+        filter(RecoveryState == input$state, Year %in% input$years) %>%
+        group_by(SourceState) %>% 
+        summarize(Guns = sum(Guns)) %>%
+        mutate(`Percent of Total` = Guns/sum(Guns)*100) %>%
+        arrange(desc(Guns))
+    } else if(input$source_recovery == 'Where Guns Are Coming From' & input$include_state == T){
+      trace_data <- traces %>% 
+        filter(RecoveryState == input$state, SourceState != input$state, Year %in% input$years) %>%
+        group_by(SourceState) %>% 
+        summarize(Guns = sum(Guns)) %>%
+        mutate(`Percent of Total` = Guns/sum(Guns)*100) %>%
+        arrange(desc(Guns))
+    }
+  })
+  
   #update text on state selectize box
   observe({
     if(input$source_recovery == "Where Guns Are Going") {
@@ -36,29 +70,25 @@ shinyServer(function(input, output, session) {
     paste("Checkbox is", input$include_state)
   })
   output$text2 <- renderText({
-    2017 %in% input$years
+    unmappable_states <- c("GUAM", "TOTAL", "TOTALS", "US VIRGIN ISLANDS", "US VIRGIN  ISLANDS", "GUAM & NORTHERN MARIANA ISLANDS", "PUERTO RICO", "ALASKA", "HAWAII")
+    trace_data <- tabularData() %>%
+      filter(!(.[[1]] %in% unmappable_states))
+    dim(trace_data)
   })
   
   output$table <- renderTable({
-    trace_data <- updateData()
-    if(input$source_recovery == 'Where Guns Are Going'){
-      trace_data %>% 
-        group_by(RecoveryState) %>% 
-        summarize(Guns = sum(Guns)) %>%
-        mutate(`Percent of Total` = Guns/sum(Guns)*100) %>%
-        arrange(desc(Guns))
-    } else if (input$source_recovery == 'Where Guns Are Coming From'){
-      trace_data %>% 
-        group_by(SourceState) %>% 
-        summarize(Guns = sum(Guns)) %>%
-        mutate(`Percent of Total` = Guns/sum(Guns)*100) %>%
-        arrange(desc(Guns))
-    }
+    tabularData()
    })
   output$map <- renderPlot({
     #get filtered data
-
-    g <- ggplot()
+    unmappable_states <- c("GUAM", "TOTAL", "TOTALS", "US VIRGIN ISLANDS", "US VIRGIN  ISLANDS", "GUAM & NORTHERN MARIANA ISLANDS", "PUERTO RICO", "ALASKA", "HAWAII")
+    trace_data <- tabularData() %>%
+      filter(!(.[[1]] %in% unmappable_states)) %>%
+      mutate(genericState = tolower(.[[1]]))
+    map <- map_data("state")
+    state <- unique(tolower(traces[,1]))
+    k <- ggplot(trace_data, aes(fill = Guns))
+    k + geom_map(aes(map_id = state), map = map) + expand_limits(x = map$long, y = map$lat)
   })
   
 })

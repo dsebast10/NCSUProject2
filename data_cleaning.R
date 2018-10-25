@@ -14,6 +14,7 @@ batch_import_files <- function(location) {
   files <- dir(location)
   
   df_trace <- data.frame()
+
   
   for (i in files) {
     if (grepl("trace", i, ignore.case = T)){
@@ -23,8 +24,7 @@ batch_import_files <- function(location) {
         mutate(Year = str_extract_all(i, "[:digit:]{4}")) %>%
         rename(SourceState = X__1) %>% 
         filter(row_number() %in% 1:55) %>%
-        gather(key = RecoveryState, value = Guns, ALABAMA:WYOMING) %>%
-        filter(SourceState != "TOTAL", SourceState != "TOTALS")
+        gather(key = RecoveryState, value = Guns, ALABAMA:WYOMING)
       df_trace <- bind_rows(df_trace, tmp_trace)
     }
   }

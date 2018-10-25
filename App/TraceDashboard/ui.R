@@ -26,8 +26,12 @@ ui<- dashboardPage(
   ),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "map"),
-      tabItem(tabName = "chart"),
+      tabItem(tabName = "map",
+              fluidPage(
+                box(plotOutput("map"))
+              )),
+      tabItem(tabName = "chart",
+              box(textOutput("text2"))),
       tabItem(tabName = "table",
               fluidPage(
                 box(tableOutput("table"))
