@@ -22,9 +22,11 @@ batch_import_files <- function(location) {
         read_excel(paste("Data/", i, sep = ""), skip = 1) %>%
         select(-`Source State`, -starts_with("total")) %>%
         mutate(Year = str_extract_all(i, "[:digit:]{4}")) %>%
-        rename(SourceState = X__1) %>% 
+        rename(`Source State` = X__1) %>% 
         filter(row_number() %in% 1:55) %>%
-        gather(key = RecoveryState, value = Guns, ALABAMA:WYOMING)
+        gather(key = `Recovery State`, value = Guns, ALABAMA:WYOMING) %>%
+        filter(`Source State` != "TOTAL", `Source State` != "TOTALS")
+      
       df_trace <- bind_rows(df_trace, tmp_trace)
     }
   }
