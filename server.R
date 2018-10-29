@@ -2,22 +2,24 @@ library(shiny)
 library(tidyverse)
 library(magrittr)
 
+
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
   gun_data <- reactive({
-    if (input$source_recovery == `Source State`){
+    if (input$source_recovery == "Source State"){
       df <- 
         traces %>%
         filter(Year %in% seq(input$years[1], input$years[2]),
-               `Recovery State` == input$state) %>%
-               {if(input$exclude_state) filter(`Source State` != input$state) else .}
+               `Recovery State` == input$state,
+               if(input$exclude_state) `Source State` != input$state)
     } else {
       df <-
         traces %>%
         filter(Year %in% seq(input$years[1], input$years[2]),
-               `Source State` == input$state) %>%
-               {if(input$exclude_state) filter(`Recovery State` != input$state) else .}
+               `Source State` == input$state,
+               if(input$exclude_state) `Recovery State` != input$state)
     }
   })
   
@@ -99,7 +101,9 @@ shinyServer(function(input, output, session) {
   })
   
   output$table <- renderTable({
-  gun_data()
+  gun_data() %>%
+      spread(Year, Guns) %>%
+      
    })
   
   output$short_table <- renderTable({
@@ -136,7 +140,7 @@ shinyServer(function(input, output, session) {
                         fill="#ffffff", color="#ffffff", size=0.15)
     
     #get filtered data
-    trace_data <- updateData()
+    trace_data <- gun_data()
     if(input$source_recovery == 'Recovery State'){
       trace_data %<>% 
         mutate(`Recovery State` = tolower(`Recovery State`)) %>%
