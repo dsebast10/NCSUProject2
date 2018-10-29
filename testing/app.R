@@ -2,7 +2,6 @@
 
 library(shiny)
 library(shinydashboard)
-library(shinythemes)
 library(tidyverse)
 library(readxl)
 library(plotly)
@@ -41,8 +40,10 @@ traces <- batch_import_files("Data/")
 
 # UI ----------------------------------------------------------------------
 
+hello <- h2("Hello txt")
+
 ui <- dashboardPage(skin = "red",
-  dashboardHeader(),
+  dashboardHeader(title = "Tracing Crime Guns"),
   dashboardSidebar(
     sidebarMenu(
       menuItem("Introduction", tabName = "intro", icon = icon("comment")),
@@ -63,9 +64,18 @@ ui <- dashboardPage(skin = "red",
   ),
   dashboardBody(
     tabItems(
+      tabItem(tabName = "intro",
+              fluidPage(
+                box(
+                  hello
+                )
+              )),
       tabItem(tabName = "map",
               fluidPage(
-                plotlyOutput("source_map")
+                box(
+                  plotlyOutput("source_map"),
+                  width = 10, height = 10
+                )
               ))
     )
   )
@@ -77,13 +87,33 @@ server <- function(input, output, session){
   
   map_data <- reactive({
     guns <- traces %>%
-      filter(RecoveryState == input$state) %>%
-      {if (input$exclude_state) filter(., SourceState != input$state) else .}
+      filter(RecoveryState == input$state,
+             Year %in% input$years[1]:input$years[2]) %>%
+             {if (input$exclude_state) filter(., SourceState != input$state) else .} %>%
       group_by(SourceState) %>%
       summarize(Guns = sum(Guns)) %>%
+      {if (input$exclude_state) rbind(.,c(input$state, 0)) else .} %>%
       mutate(SourceState = str_to_title(SourceState)) %>%
       filter(SourceState %in% state.name) %>%
-      mutate(Abbr = setNames(state.abb, SourceState))
+      arrange(SourceState) %>%
+      mutate(Abbr = setNames(state.abb, SourceState))%>%
+      mutate(Guns = as.numeric(Guns))
+  })
+  
+  chart_data <- reactive({
+    guns <- 
+      traces %>%
+      filter(RecoveryState == input$state,
+             Year %in% input$years[1]:input$years[2]) %>%
+             {if (input$exclude_state) filter(., SourceState != input$state) else .} %>%
+      group_by(SourceState, Year) %>%
+      summarize(Guns = sum(Guns)) %>%
+      {if (input$exclude_state) rbind(.,c(input$state, 0)) else .} %>%
+      mutate(SourceState = str_to_title(SourceState)) %>%
+      filter(SourceState %in% state.name) %>%
+      arrange(SourceState) %>%
+      mutate(Abbr = setNames(state.abb, SourceState))%>%
+      mutate(Guns = as.numeric(Guns))
   })
   
   
@@ -100,23 +130,25 @@ server <- function(input, output, session){
     guns <- map_data()
     
     l <- list(color = toRGB("white"), width = 2)
-    
+
     g <- list(
       scope = 'usa',
       projection = list(type = 'albers usa'),
       lakecolor = toRGB('white')
     )
-    
+
     p <- plot_geo(guns, locationmode = 'USA-states') %>%
       add_trace(
         z = ~Guns,
         locations = ~Abbr,
-        color = ~Guns, colors = 'YlGnBu'
-      ) %>%
-      colorbar(title = "Guns") %>%
+        color = ~Guns, colors = "YlGnBu") %>%
       layout(geo = g)
-    
     p
+
+  })
+  
+  output$time_chart <- renderPlotly({
+    
   })
 }
 
