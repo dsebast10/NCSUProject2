@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <script type="application/shiny-singletons"></script>
+  <script type="application/html-dependencies">json2[2014.02.04];jquery[1.12.4];shiny[1.1.0];font-awesome[4.7.0];selectize[0.11.2];ionrangeslider[2.1.6];strftime[0.9.2];bootstrap[3.3.7];htmlwidgets[1.2];plotly-binding[4.8.0];datatables[1.10.5];datatables-bootstrap[1.10.5];AdminLTE[2.0.6];shinydashboard[0.7.0]</script>
+<script src="shared/json2-min.js"></script>
+<script src="shared/jquery.min.js"></script>
+<link href="shared/shiny.css" rel="stylesheet" />
+<script src="shared/shiny.min.js"></script>
+<link href="shared/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+<link href="shared/selectize/css/selectize.bootstrap3.css" rel="stylesheet" />
+<!--[if lt IE 9]>
+<script src="shared/selectize/js/es5-shim.min.js"></script>
+<![endif]-->
+<script src="shared/selectize/js/selectize.min.js"></script>
+<link href="shared/ionrangeslider/css/ion.rangeSlider.css" rel="stylesheet" />
+<link href="shared/ionrangeslider/css/ion.rangeSlider.skinShiny.css" rel="stylesheet" />
+<script src="shared/ionrangeslider/js/ion.rangeSlider.min.js"></script>
+<script src="shared/strftime/strftime-min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="shared/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+<script src="shared/bootstrap/js/bootstrap.min.js"></script>
+<script src="shared/bootstrap/shim/html5shiv.min.js"></script>
+<script src="shared/bootstrap/shim/respond.min.js"></script>
+<script src="htmlwidgets-1.2/htmlwidgets.js"></script>
+<script src="plotly-binding-4.8.0/plotly.js"></script>
+<script src="shared/datatables/js/jquery.dataTables.min.js"></script>
+<link href="shared/datatables/css/dataTables.bootstrap.css" rel="stylesheet" />
+<link href="shared/datatables/css/dataTables.extra.css" rel="stylesheet" />
+<script src="shared/datatables/js/dataTables.bootstrap.js"></script>
+<link href="AdminLTE-2.0.6/AdminLTE.min.css" rel="stylesheet" />
+<link href="AdminLTE-2.0.6/_all-skins.min.css" rel="stylesheet" />
+<script src="AdminLTE-2.0.6/app.min.js"></script>
+<link href="shinydashboard-0.7.0/shinydashboard.css" rel="stylesheet" />
+<script src="shinydashboard-0.7.0/shinydashboard.min.js"></script>  <title>Tracing Crime Guns</title>
+
+</head>
+
+<body class="skin-red" style="min-height: 611px;">
+  <div class="wrapper">
+    <header class="main-header">
+      <span class="logo">Tracing Crime Guns</span>
+      <nav class="navbar navbar-static-top" role="navigation">
+        <span style="display:none;">
+          <i class="fa fa-bars"></i>
+        </span>
+        <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+          <span class="sr-only">Toggle navigation</span>
+        </a>
+        <div class="navbar-custom-menu">
+          <ul class="nav navbar-nav"></ul>
+        </div>
+      </nav>
+    </header>
+    <aside id="sidebarCollapsed" class="main-sidebar" data-collapsed="false">
+      <section id="sidebarItemExpanded" class="sidebar">
+        <ul class="sidebar-menu">
+          <li>
+            <a href="#shiny-tab-intro" data-toggle="tab" data-value="intro">
+              <i class="fa fa-comment"></i>
+              <span>Introduction</span>
+            </a>
+          </li>
+          <div id="source_recovery" class="form-group shiny-input-radiogroup shiny-input-container">
+            <label class="control-label" for="source_recovery">Choose way of Looking at Data</label>
+            <div class="shiny-options-group">
+              <div class="radio">
+                <label>
+                  <input type="radio" name="source_recovery" value="Source States" checked="checked"/>
+                  <span>Source States</span>
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="source_recovery" value="Recovery States"/>
+                  <span>Recovery States</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <li>
+            <a href="#shiny-tab-map" data-toggle="tab" data-value="map">
+              <i class="fa fa-map"></i>
+              <span>Map</span>
+            </a>
+          </li>
+          <li>
+            <a href="#shiny-tab-chart" data-toggle="tab" data-value="chart">
+              <i class="fa fa-line-chart"></i>
+              <span>Time Chart</span>
+            </a>
+          </li>
+          <li>
+            <a href="#shiny-tab-table" data-toggle="tab" data-value="table">
+              <i class="fa fa-table"></i>
+              <span>Data Table</span>
+            </a>
+          </li>
+          <h3> Filters</h3>
+          <div class="form-group shiny-input-container">
+            <label class="control-label" for="state">Select Recovery State</label>
+            <div>
+              <select id="state" class="form-control"><option value="ALABAMA">ALABAMA</option>
+<option value="ALASKA">ALASKA</option>
+<option value="ARIZONA">ARIZONA</option>
+<option value="ARKANSAS">ARKANSAS</option>
+<option value="CALIFORNIA">CALIFORNIA</option>
+<option value="COLORADO">COLORADO</option>
+<option value="CONNECTICUT">CONNECTICUT</option>
+<option value="DELAWARE">DELAWARE</option>
+<option value="DISTRICT OF COLUMBIA" selected>DISTRICT OF COLUMBIA</option>
+<option value="FLORIDA">FLORIDA</option>
+<option value="GEORGIA">GEORGIA</option>
+<option value="GUAM &amp; NORTHERN MARIANA ISLANDS">GUAM &amp; NORTHERN MARIANA ISLANDS</option>
+<option value="HAWAII">HAWAII</option>
+<option value="IDAHO">IDAHO</option>
+<option value="ILLINOIS">ILLINOIS</option>
+<option value="INDIANA">INDIANA</option>
+<option value="IOWA">IOWA</option>
+<option value="KANSAS">KANSAS</option>
+<option value="KENTUCKY">KENTUCKY</option>
+<option value="LOUISIANA">LOUISIANA</option>
+<option value="MAINE">MAINE</option>
+<option value="MARYLAND">MARYLAND</option>
+<option value="MASSACHUSETTS">MASSACHUSETTS</option>
+<option value="MICHIGAN">MICHIGAN</option>
+<option value="MINNESOTA">MINNESOTA</option>
+<option value="MISSISSIPPI">MISSISSIPPI</option>
+<option value="MISSOURI">MISSOURI</option>
+<option value="MONTANA">MONTANA</option>
+<option value="NEBRASKA">NEBRASKA</option>
+<option value="NEVADA">NEVADA</option>
+<option value="NEW HAMPSHIRE">NEW HAMPSHIRE</option>
+<option value="NEW JERSEY">NEW JERSEY</option>
+<option value="NEW MEXICO">NEW MEXICO</option>
+<option value="NEW YORK">NEW YORK</option>
+<option value="NORTH CAROLINA">NORTH CAROLINA</option>
+<option value="NORTH DAKOTA">NORTH DAKOTA</option>
+<option value="OHIO">OHIO</option>
+<option value="OKLAHOMA">OKLAHOMA</option>
+<option value="OREGON">OREGON</option>
+<option value="PENNSYLVANIA">PENNSYLVANIA</option>
+<option value="PUERTO RICO">PUERTO RICO</option>
+<option value="RHODE ISLAND">RHODE ISLAND</option>
+<option value="SOUTH CAROLINA">SOUTH CAROLINA</option>
+<option value="SOUTH DAKOTA">SOUTH DAKOTA</option>
+<option value="TENNESSEE">TENNESSEE</option>
+<option value="TEXAS">TEXAS</option>
+<option value="US VIRGIN ISLANDS">US VIRGIN ISLANDS</option>
+<option value="UTAH">UTAH</option>
+<option value="VERMONT">VERMONT</option>
+<option value="VIRGINIA">VIRGINIA</option>
+<option value="WASHINGTON">WASHINGTON</option>
+<option value="WEST VIRGINIA">WEST VIRGINIA</option>
+<option value="WISCONSIN">WISCONSIN</option>
+<option value="WYOMING">WYOMING</option></select>
+              <script type="application/json" data-for="state">{}</script>
+            </div>
+          </div>
+          <div class="form-group shiny-input-container">
+            <label class="control-label" for="years">Years</label>
+            <input class="js-range-slider" id="years" data-type="double" data-min="2013" data-max="2017" data-from="2013" data-to="2017" data-step="1" data-grid="true" data-grid-num="4" data-grid-snap="false" data-prettify-separator="" data-prettify-enabled="false" data-keyboard="true" data-drag-interval="true" data-data-type="number"/>
+          </div>
+          <div class="form-group shiny-input-container">
+            <div class="checkbox">
+              <label>
+                <input id="exclude_state" type="checkbox"/>
+                <span>Exclude selected State in totals?</span>
+              </label>
+            </div>
+          </div>
+          <a id="downloadTrace" class="btn btn-default shiny-download-link " href="" target="_blank" download>
+            <i class="fa fa-download"></i>
+            Download
+          </a>
+        </ul>
+      </section>
+    </aside>
+    <div class="content-wrapper">
+      <section class="content">
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane" id="shiny-tab-intro">
+            <div class="container-fluid">
+              <div class="col-sm-6">
+                <div class="box">
+                  <div class="box-body">
+                    <div id="intro_html" class="shiny-html-output"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane" id="shiny-tab-map">
+            <div class="container-fluid">
+              <div id="source_map" style="width:100%; height:800px; " class="plotly html-widget html-widget-output shiny-report-size"></div>
+              <div id="selection" class="shiny-text-output"></div>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane" id="shiny-tab-chart">
+            <div class="container-fluid">
+              <div class="row">
+                <div id="source_time_chart" style="width:100%; height:400px; " class="plotly html-widget html-widget-output shiny-report-size"></div>
+              </div>
+              <div class="row">
+                <div id="destination_time_chart" style="width:100%; height:400px; " class="plotly html-widget html-widget-output shiny-report-size"></div>
+              </div>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane" id="shiny-tab-table">
+            <div class="container-fluid">
+              <div id="cross_tab" class="shiny-datatable-output"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+</html>

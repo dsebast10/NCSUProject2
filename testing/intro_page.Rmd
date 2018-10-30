@@ -1,0 +1,89 @@
+---
+title: "Crime Gun Tracing"
+author: "Daniel Sebastian"
+date: "October 30, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+batch_import_files <- function(location) {
+  # Imports and appends like excel files of data. Handles four different datasets
+  #
+  # Args:
+  #   location: The path to the file that contains the data to be imported. The 
+  #             data should be the only items in the file
+  #
+  # Returns two datasets:
+  #   df_trace: a dataframe containing all of the trace data in the directory
+  
+  files <- dir(location)
+  
+  df_trace <- data.frame()
+  
+  for (i in files) {
+    if (grepl("trace", i, ignore.case = T)){
+      tmp_trace <- 
+        read_excel(paste("Data/", i, sep = ""), skip = 1) %>%
+        select(-`Source State`, -starts_with("total")) %>%
+        mutate(Year = as.numeric(str_extract_all(i, "[:digit:]{4}"))) %>%
+        rename(SourceState = X__1) %>% 
+        filter(row_number() %in% 1:55) %>%
+        gather(key = RecoveryState, value = Guns, ALABAMA:WYOMING) %>%
+        filter(SourceState != "TOTAL", SourceState != "TOTALS")
+      df_trace <- bind_rows(df_trace, tmp_trace)
+    }
+  }
+  df_trace
+  
+}
+traces <- batch_import_files("Data/")
+```
+
+## App Notes
+
+For best results, run the app full screen in a browser window.
+
+## Crime Guns
+
+A **Crime Gun** is defined as a gun that is posessed illegally or has been used in the commission of a crime. The ATF makes the distinction between **Crime Guns** and guns generally to allay concerns of gun rights groups. 
+
+## Tracing
+
+When a gun is purchased from a Federal Firearms Licensee (FFL, aka 'Gun Dealer') the FFL must keep a record of the gun's make, model, and serial number as well as identifying details of the purchaser.
+
+When a gun is recovered and submitted for a Trace, the ATF contacts the FFL who sold the gun to get that information about the purchaser. 
+
+Not all recovered guns can be traced. Most frequently, a trace cannot be completed because the serial number has been obliterated. Traces can also fail when the gun is too old to have been recorded electronically.
+
+## Source States and Recovery States
+
+While most guns are recovered in the same state that they were purchased in, there are a significant 
+
+## Traces Over Time
+
+It is important to consider that more law enforcement agencies are particpating in the eTrace program, meaning that more guns are being traced. The increase in total traces does not necessarily indicate that gun trafficking is increasing. Also note that not all guns are able to be traced to the original seller due to age or the obliteration of serial numbers.
+
+```{r guntraces, echo=FALSE}
+guns <- traces %>%
+  group_by(Year) %>%
+  summarize(Traces = sum(Guns))
+g <- ggplot(guns, aes(x=Year, y=Traces)) +
+  geom_line() + 
+  geom_point() +
+  ggtitle("Guns Traced Countrywide by ATF Per Year")
+g
+```
+
+## Future Additions
+
+It is important to see the effect of gun control laws on the trafficking (or lack there of) of guns. For the predictive modeling part of my app, we will consider how changes in *gun rights* (as defined by the CATO institute, available here : <https://www.freedominthe50states.org/data>) effect the ratio of guns traced to outside states to guns traced to the same state.
+
+
+## Data Source
+
+The data for this project is open source and comes from the ATF here: <https://www.atf.gov/resource-center/data-statistics>.
+
+The data did require significant cleaning, so the full data set used in this app is availble for download by clicking the **Download** button at the bottom of the sidebar.
