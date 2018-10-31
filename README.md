@@ -20,3 +20,14 @@ The app defaults to the source states for the District of Columbia for a few rea
 1.  The District of Columbia has a very interesting relationship with firearms. There is only one Federal Firearms Licesnsee (FFL), aka "Gun Dealer", in the entire city. It is also in close proximity to several gunshows that occur frequently in the Northern Virginia area. While some cities like New York and Chicago make it very difficult to buy and posess guns, they are within larger states with more lax gun laws.
 
 2.  The author works for the Metropolitan Police Department (MPD) in the District of Columbia
+
+Required Packages
+-----------------
+
+-   `tidyverse`
+-   `shiny`
+-   `shinydashboard`
+-   `readxl`
+-   `plotly`
+-   `magrittr`
+-   `DT`

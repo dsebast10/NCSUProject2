@@ -21,7 +21,7 @@ batch_import_files <- function(location) {
       tmp_trace <- 
         read_excel(paste("Data/", i, sep = ""), skip = 1) %>%
         select(-`Source State`, -starts_with("total")) %>%
-        mutate(Year = str_extract_all(i, "[:digit:]{4}")) %>%
+        mutate(Year = as.numeric(str_extract_all(i, "[:digit:]{4}"))) %>%
         rename(SourceState = X__1) %>% 
         filter(row_number() %in% 1:55) %>%
         gather(key = RecoveryState, value = Guns, ALABAMA:WYOMING)
