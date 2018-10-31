@@ -36,7 +36,7 @@ ui<- dashboardPage(
       tabItem(tabName = "map",
               fluidPage(
                 fluidRow(
-                  box(plotOutput("map"))),
+                  box(plotOutput("map"), width = 12)),
                 fluidRow(
                   box(tableOutput("short_table"), title = "Top 5")
                   )
