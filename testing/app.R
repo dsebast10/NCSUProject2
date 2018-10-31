@@ -7,6 +7,7 @@ library(readxl)
 library(plotly)
 library(magrittr)
 library(DT)
+library(processx)
 
 batch_import_files <- function(location) {
   # Imports and appends like excel files of data. Handles four different datasets
@@ -45,12 +46,13 @@ traces <- batch_import_files("Data/")
 
 
 ui <- dashboardPage(skin = "red",
-  dashboardHeader(title = "Tracing Crime Guns"),
-  dashboardSidebar(
+  dashboardHeader(title = "Tracing Crime Guns To and From States",
+                  titleWidth = 450),
+  dashboardSidebar(width = 350,
     sidebarMenu(
       menuItem("Introduction", tabName = "intro", icon = icon("comment")),
       radioButtons("source_recovery",
-                   "Choose way of Looking at Data",
+                   "Choose Data to Display on Map",
                    choices = c("Source States", "Recovery States")),
       menuItem("Map", tabName = "map", icon = icon("map")),
       menuItem("Time Chart", tabName = "chart", icon = icon("line-chart")),
@@ -76,8 +78,14 @@ ui <- dashboardPage(skin = "red",
               )),
       tabItem(tabName = "map",
               fluidPage(
+                withMathJax(),
                 plotlyOutput("source_map", height = '800px'),
-                textOutput("selection")
+                textOutput("selection"),
+                helpText('A log color scale was used to make this map 
+               because most of the distributions were very right tailed.
+               We add 1 to the total to account for 0s.
+               $$\\log(guns+1)$$'),
+                h5("To export the plot, click on the camera at the top right corner.")
               )),
       tabItem(tabName = "chart",
               fluidPage(
@@ -86,11 +94,13 @@ ui <- dashboardPage(skin = "red",
                 ),
                 fluidRow(
                   plotlyOutput("destination_time_chart")
-                )
+                ),
+                h5("To export the plots, click on the camera at the top right corner on each plot.")
               )),
       tabItem(tabName = "table",
-              fluidPage(
-                DT::dataTableOutput("cross_tab")
+              fluidPage(fluidRow(box(h2(textOutput("table_title")), align='center'),
+                                 box(downloadButton("downloadSubsetData", "Download Data Displayed"))),
+                        fluidRow(box(DT::dataTableOutput("cross_tab")))
               ))
     )
   )
@@ -100,6 +110,46 @@ ui <- dashboardPage(skin = "red",
 
 server <- function(input, output, session){
 
+  # observe({
+  #   if(input$tab == "map" & input$source_recovery == "Source States"){
+  #     updateActionButton()
+  #   }
+  # })
+  #Create Data for Source Maps & Datatable
+  source_map_data <- reactive({
+    guns <- traces %>%
+      filter(RecoveryState == input$state,
+             Year %in% input$years[1]:input$years[2]) %>%
+             {if (input$exclude_state) filter(., SourceState != input$state) else .} %>%
+      group_by(SourceState) %>%
+      summarize(Guns = sum(Guns)) %>%
+      {if (input$exclude_state) rbind(.,c(input$state, 0)) else .} %>%
+      mutate(SourceState = str_to_title(SourceState)) %>%
+      filter(SourceState %in% state.name) %>%
+      arrange(SourceState) %>%
+      mutate(Abbr = setNames(state.abb, SourceState),
+             Guns = as.numeric(Guns),
+             lGuns = log(Guns+1))
+  })
+  
+  recovery_map_data <- reactive({
+    guns <- traces %>%
+      filter(SourceState == input$state,
+             Year %in% input$years[1]:input$years[2]) %>%
+             {if (input$exclude_state) filter(., RecoveryState != input$state) else .} %>%
+      group_by(RecoveryState) %>%
+      summarize(Guns = sum(Guns)) %>%
+      {if (input$exclude_state) rbind(.,c(input$state, 0)) else .} %>%
+      mutate(RecoveryState = str_to_title(RecoveryState)) %>%
+      filter(RecoveryState %in% state.name) %>%
+      arrange(RecoveryState) %>%
+      mutate(Abbr = setNames(state.abb, RecoveryState),
+             Guns = as.numeric(Guns),
+             lGuns = log(Guns+1))
+  })
+  
+  
+  
   #update text on state selectize box
   observe({
     if(input$source_recovery == "Source States") {
@@ -131,24 +181,14 @@ server <- function(input, output, session){
   getPage<-function() {
     return(includeHTML("intro_page.html"))
   }
+  
+  #Grabbing the output intro from .html that was written with R Markdown
   output$intro_html<-renderUI({getPage()})
   
   #Source & Recovery Maps
   output$source_map <- renderPlotly({
     if(input$source_recovery == "Source States"){
-      guns <- traces %>%
-        filter(RecoveryState == input$state,
-               Year %in% input$years[1]:input$years[2]) %>%
-               {if (input$exclude_state) filter(., SourceState != input$state) else .} %>%
-        group_by(SourceState) %>%
-        summarize(Guns = sum(Guns)) %>%
-        {if (input$exclude_state) rbind(.,c(input$state, 0)) else .} %>%
-        mutate(SourceState = str_to_title(SourceState)) %>%
-        filter(SourceState %in% state.name) %>%
-        arrange(SourceState) %>%
-        mutate(Abbr = setNames(state.abb, SourceState),
-               Guns = as.numeric(Guns),
-               lGuns = log(Guns+1))
+      guns <- source_map_data()
       
       l <- list(color = toRGB("white"), width = 2)
   
@@ -170,19 +210,7 @@ server <- function(input, output, session){
                title = paste("Source States for Guns Recovered in", str_to_title(input$state)))
       p
     } else {
-      guns <- traces %>%
-        filter(SourceState == input$state,
-               Year %in% input$years[1]:input$years[2]) %>%
-               {if (input$exclude_state) filter(., RecoveryState != input$state) else .} %>%
-        group_by(RecoveryState) %>%
-        summarize(Guns = sum(Guns)) %>%
-        {if (input$exclude_state) rbind(.,c(input$state, 0)) else .} %>%
-        mutate(RecoveryState = str_to_title(RecoveryState)) %>%
-        filter(RecoveryState %in% state.name) %>%
-        arrange(RecoveryState) %>%
-        mutate(Abbr = setNames(state.abb, RecoveryState),
-               Guns = as.numeric(Guns),
-               lGuns = log(Guns+1))
+      guns <- recovery_map_data()
       
       l <- list(color = toRGB("white"), width = 2)
       
@@ -207,6 +235,7 @@ server <- function(input, output, session){
     }
     
   })
+
   
   #UI updated text based on selection
   output$selection <- renderText({
@@ -280,18 +309,39 @@ server <- function(input, output, session){
     g
   })
   
+  #table title
+  output$table_title <- renderText({paste(input$source_recovery, "For", 
+                                          str_to_title(input$state), "guns From", 
+                                          input$years[1], "To", input$years[2])})
+  
   #table showing raw data
   output$cross_tab <- DT::renderDataTable({
     DT::datatable(
-      (traces %>%
-        filter(Year %in% input$years[1]:input$years[2]) %>%
-        group_by(SourceState, RecoveryState) %>%
-        summarize(Guns = sum(Guns)) %>%
-        spread(RecoveryState, Guns)),
+      if(input$source_recovery == "Source States"){
+        source_map_data() %>%
+          select(-lGuns)
+        } else {
+          recovery_map_data() %>%
+            select(-lGuns)
+        },
       extensions = list("Scroller", "FixedColumns", "Buttons"),
-      options = list(dom = 'Bfrtip', scrollX = T, scrollY = T, scroller = T, fixedColumns = T, buttons = c('csv', 'excel'))
+      options = list(pageLength = 56, scrollY = "800px", buttons = c('csv', 'excel'))
       )
   })
+  
+  #server info for download button
+  output$downloadSubsetData <- downloadHandler(
+    filename = function() {paste(input$source_recovery, "for", input$state, input$years[1], input$years[2],".csv",sep="_")},
+    content = function(fname){
+      if(input$source_recovery == "Source States"){
+        guns <- source_map_data() %>% select(-lGuns)
+        write.csv(guns, fname, row.names = F)
+      } else{
+        guns <- recovery_map_data() %>% select(-lGuns)
+        write.csv(guns, fname, row.names = F)
+      }
+    }
+  )
 }
 
 # APP ---------------------------------------------------------------------

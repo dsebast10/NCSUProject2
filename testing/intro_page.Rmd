@@ -1,7 +1,6 @@
 ---
 title: "Crime Gun Tracing"
 author: "Daniel Sebastian"
-date: "October 30, 2018"
 output: html_document
 ---
 
@@ -46,6 +45,10 @@ traces <- batch_import_files("Data/")
 
 For best results, run the app full screen in a browser window.
 
+Created for NCSU Fall 2018 ST 590 Data Science with R.
+
+Make sure to use the Radio Buttons on the left to change the data displayed on the map!
+
 ## Crime Guns
 
 A **Crime Gun** is defined as a gun that is posessed illegally or has been used in the commission of a crime. The ATF makes the distinction between **Crime Guns** and guns generally to allay concerns of gun rights groups. 
@@ -60,11 +63,21 @@ Not all recovered guns can be traced. Most frequently, a trace cannot be complet
 
 ## Source States and Recovery States
 
-While most guns are recovered in the same state that they were purchased in, there are a significant 
+While most guns are recovered in the same state that they were purchased in, there are a significant number that are later recovered in other states. This is very evident for states with notoriously lax gun laws like Virginia and Indiana.
+
+Perhaps the most prominent example of gun trafficking is known as the *Iron Pipeline*, a nickname for several southern states that are frequent sources for guns recovered in northeastern cities. More info available here: <https://www.nytimes.com/interactive/2015/11/12/us/gun-traffickers-smuggling-state-gun-laws.html>
+
+## Why Focus On the District of Columbia
+
+The District of Columbia offers a fairly unique perspective into gun trafficking. Due to its relative small size and population, and the fairly strict gun laws in place, it is very difficult to buy guns legally. There is only one FFL in the entire District, so any gun purchased in DC, must be bought from him. Additionally, if you are a resident of DC and purchase a gun in a different state, you must transfer the firearm through the single DC FFL. All that is to say that almost all of the guns recovered in the District of Columbia were purchased in a different state. For that reason, we can really focus on the gun trafficking occuring in the area.
+
+Additionally, the author of this app works in Law Enforcement in the DC area, specifically focusing on gun crime.
 
 ## Traces Over Time
 
-It is important to consider that more law enforcement agencies are particpating in the eTrace program, meaning that more guns are being traced. The increase in total traces does not necessarily indicate that gun trafficking is increasing. Also note that not all guns are able to be traced to the original seller due to age or the obliteration of serial numbers.
+It is important to consider that over time more law enforcement agencies are particpating in the eTrace program, meaning that more guns are being traced. The increase in total traces does not necessarily indicate that gun trafficking is increasing. Additionally, the agencies that do submit their recovered guns for traces are more likely to be larger, experience more gun crime, and have better relationships with the ATF.
+
+Also note that not all guns are able to be traced to the original seller due to age or the obliteration of serial numbers.
 
 ```{r guntraces, echo=FALSE}
 guns <- traces %>%
@@ -77,13 +90,31 @@ g <- ggplot(guns, aes(x=Year, y=Traces)) +
 g
 ```
 
+
 ## Future Additions
 
 It is important to see the effect of gun control laws on the trafficking (or lack there of) of guns. For the predictive modeling part of my app, we will consider how changes in *gun rights* (as defined by the CATO institute, available here : <https://www.freedominthe50states.org/data>) effect the ratio of guns traced to outside states to guns traced to the same state.
 
+## Further Research for those Interested
+
+The data made avaialable by the ATF is very heavily anonymyized, aggregated to the state and year level, making it hard to find the details of trafficking. However, some states are starting to publish their own tracing data with much more detail about the gun types, time-to-crime, and destination zipcodes, led by New York. They have a wonderful 'story-board' available here: <https://targettrafficking.ag.ny.gov/>
 
 ## Data Source
 
 The data for this project is open source and comes from the ATF here: <https://www.atf.gov/resource-center/data-statistics>.
 
 The data did require significant cleaning, so the full data set used in this app is availble for download by clicking the **Download** button at the bottom of the sidebar.
+
+Additonally, all of the plots can be downloaded by clicking on the camera at the top of the plot.
+
+
+## Troubleshooting
+
+If this app is not working, make sure you have all the required packages installed:  
+1. `tidyverse`  
+2. `shiny`  
+3. `shinydashboard`  
+4. `readxl`  
+5. `plotly`  
+6. `magrittr`  
+7. `DT`
