@@ -62,8 +62,8 @@ ui <- dashboardPage(skin = "red",
                      "Select Recovery State",
                      selected = "DISTRICT OF COLUMBIA",
                      choices = levels(as.factor(traces$`RecoveryState`))),
-      sliderInput("years", "Years", min = 2013, max = 2017, value = c(2013, 2017), step = 1, sep = ""),
       checkboxInput("exclude_state", "Exclude selected State in totals?"),
+      sliderInput("years", "Years", min = 2010, max = 2017, value = c(2010, 2017), step = 1, sep = ""),
       h4("Download Full Cleaned Dataset"),
       downloadButton('downloadData', 'Download')
     )
@@ -171,7 +171,7 @@ server <- function(input, output, session){
   
   #server info for download button
   output$downloadData <- downloadHandler(
-    filename = function() {"full_trace_data_13_17.csv"},
+    filename = function() {"full_trace_data_10_17.csv"},
     content = function(fname){
       write.csv(traces, fname, row.names = F)
     }
