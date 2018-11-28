@@ -1,6 +1,7 @@
 #Read In NCIC Backgrounds for Gun Sales
 library(pdftools)
 library(tidyverse)
+library(readxl)
 
 
 x <- pdf_text('https://www.fbi.gov/file-repository/nics_firearm_checks_-_month_year_by_state.pdf')
