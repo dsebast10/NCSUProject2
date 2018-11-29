@@ -20,6 +20,7 @@ axis(1, at = seq(1,19), labels = seq(1999,2017))
 
 a2 <- map_dfr(a, function(d) select(d, State, Total))%>%
   mutate(Year = rep(1999:2017, each=55),
-         State = str_to_upper(State))
+         State = str_to_upper(State)) %>%
+  rename(BackgroundChecks = Total)
 
 
