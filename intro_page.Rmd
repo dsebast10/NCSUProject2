@@ -1,7 +1,10 @@
 ---
 title: "Crime Gun Tracing"
 author: "Daniel Sebastian"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -48,6 +51,38 @@ For best results, run the app full screen in a browser window.
 Created for NCSU Fall 2018 ST 590 Data Science with R.
 
 Make sure to use the Radio Buttons on the left to change the data displayed on the map!
+
+# Project Synopsis
+
+The goal of this project is to show how 
+
+# Data {.tabset}
+
+## Trace Data
+
+The trace data for this project is open source and comes from the ATF here: <https://www.atf.gov/resource-center/data-statistics>.
+
+The data did require significant cleaning, so the full data set used in this app is availble for download by clicking the **Download** button at the bottom of the sidebar.
+
+Additonally, all of the plots can be downloaded by clicking on the camera at the top of the plot.
+
+## NCIC Data
+
+When someone purchases a gun from a Federal Firearms Licensee (FFL), they generally are subject to a background check run through the FBI's NCIC (National Crime Information Center), depending on local and state laws. The FBI records the number of background checks run in each state by month and reports them here: <https://www.fbi.gov/file-repository/nics_firearm_checks_-_month_year.pdf/view>
+
+This data is intended to serve as a proxy for gun sales by year and state. Unfortunately, there are few more accessible datasets for this purpose.
+
+There are some inconsistencies in the way states use the NCIC system that are important to keep in mind. For instance, Kentucky law mandates that most gun owners are checked throught the NCIC system every month. For this reason, Kentucky runs about 4.5 million per year, whereas large states like California, Florida and Texas run closer to 1.5 million checks per year. Because we are using this dataset to approximate gun purchaes, we will exclude Kentucky when using the NCIC data.
+
+## CATO Data
+
+The CATO Intitue (formerly the Charles Koch Foundation) is a Libertarian Think Tank. Every year they publish a spreadsheet of "Freedom in the 50 States", which presents a quasi-stochastic measure of 'freedom' in several different domains. It includes topics from the legal right to marry your cousin, to the burdens of "anti-price gouging laws" placed on companies. In their index, they include several measures of 'Gun Rights' that they combine into a single index for Gun Rights. We will use this measure as a proxy for the kinds of gun control used in states to prevent trafficking. The data is available here: <https://www.freedominthe50states.org/data>.
+
+## Census Populations
+
+A population estimate for the states from 2017 comes from the 2017 ACS (American Community Survey).
+
+# Definitions {.tabset}
 
 ## Crime Guns
 
@@ -118,3 +153,4 @@ If this app is not working, make sure you have all the required packages install
 5. `plotly`  
 6. `magrittr`  
 7. `DT`
+8. `pdftools`

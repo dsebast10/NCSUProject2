@@ -1,4 +1,4 @@
-# STATIC CODE -------------------------------------------------------------
+# Libraries -------------------------------------------------------------
 
 library(shiny)
 library(shinydashboard)
@@ -8,38 +8,12 @@ library(plotly)
 library(magrittr)
 library(DT)
 library(processx)
+library(pdftools)
 
-batch_import_files <- function(location) {
-  # Imports and appends like excel files of data. Handles four different datasets
-  #
-  # Args:
-  #   location: The path to the file that contains the data to be imported. The 
-  #             data should be the only items in the file
-  #
-  # Returns datasets:
-  #   df_trace: a dataframe containing all of the trace data in the directory
-  
-  files <- dir(location)
-  
-  df_trace <- data.frame()
-  
-  for (i in files) {
-    if (grepl("trace", i, ignore.case = T)){
-      tmp_trace <- 
-        read_excel(paste("Data/", i, sep = ""), skip = 1) %>%
-        select(-`Source State`, -starts_with("total")) %>%
-        mutate(Year = as.numeric(str_extract_all(i, "[:digit:]{4}"))) %>%
-        rename(SourceState = X__1) %>% 
-        filter(row_number() %in% 1:55) %>%
-        gather(key = RecoveryState, value = Guns, ALABAMA:WYOMING) %>%
-        filter(SourceState != "TOTAL", SourceState != "TOTALS")
-      df_trace <- bind_rows(df_trace, tmp_trace)
-    }
-  }
-  df_trace
-  
-}
-traces <- batch_import_files("Data/")
+
+# Static Data Handling ----------------------------------------------------
+
+source('data_import.R')
 
 # UI ----------------------------------------------------------------------
 
@@ -50,7 +24,7 @@ ui <- dashboardPage(skin = "red",
                   titleWidth = 450),
   dashboardSidebar(width = 350,
     sidebarMenu(
-      menuItem("Introduction", tabName = "intro", icon = icon("comment")),
+      menuItem("Introduction", tabName = "intro", icon = icon("comment"), selected = T),
       radioButtons("source_recovery",
                    "Choose Data to Display on Map",
                    choices = c("Source States", "Recovery States")),
@@ -73,7 +47,8 @@ ui <- dashboardPage(skin = "red",
       tabItem(tabName = "intro",
               fluidPage(
                 box(
-                  htmlOutput("intro_html")
+                  htmlOutput(intro_html),
+                  width = 12
                 )
               )),
       tabItem(tabName = "map",
@@ -179,7 +154,7 @@ server <- function(input, output, session){
   
   #setting up html output
   getPage<-function() {
-    return(includeHTML("intro_page.html"))
+    return(includeText("intro_page.html"))
   }
   
   #Grabbing the output intro from .html that was written with R Markdown
