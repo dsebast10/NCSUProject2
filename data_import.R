@@ -39,7 +39,6 @@ batch_import_files <- function(location) {
 }
 traces <- batch_import_files("Data/")
 
-
 # Import NCIC Data --------------------------------------------------------
 
 # The NCIC Data is available from the FBI in PDF format. This part of the script
@@ -58,7 +57,6 @@ NCIC_df <-
          State = str_to_upper(State)) %>%
   rename(BackgroundChecks = Total)
 
-
 # Import CATO Data --------------------------------------------------------
 
 # Importing CATO data from spreadsheet. There are several unneeded columns and
@@ -68,8 +66,8 @@ NCIC_df <-
 cato <- read_xlsx("Data/Freedom_In_The_50_States_2018.xlsx", sheet = "Personal") %>%
   select(X__1:`Gun Rights`) %>%
   mutate(State = str_to_upper(X__1),
-         Year = as.numeric(X__2))
-
+         Year = as.numeric(X__2)) %>%
+  
 
 # State Populations -------------------------------------------------------
 
@@ -79,6 +77,57 @@ cato <- read_xlsx("Data/Freedom_In_The_50_States_2018.xlsx", sheet = "Personal")
 
 acs <- readRDS('Data/acs2017.Rds')
 
+
+# Create Trace Stat -------------------------------------------------------
+
+home_recoveries <- 
+  traces %>%
+  filter(SourceState == RecoveryState) %>%
+  rename(HomeGuns = Guns)
+
+away_recoveries <- 
+  traces %>%
+  filter(SourceState != RecoveryState) %>%
+  group_by(RecoveryState, Year) %>%
+  summarize(AwayGuns = sum(Guns))
+
+recovery_rates <- inner_join(home_recoveries, away_recoveries, 
+                             by = c("RecoveryState", "Year")) %>%
+  mutate(home_away_rate = HomeGuns/(AwayGuns+HomeGuns))
+
+# Combine to One Dataset --------------------------------------------------
+
+df_joined <- inner_join(recovery_rates, select(cato, -X__1, -X__2), by = c('RecoveryState' = "State", "Year")) %>%
+  inner_join(NCIC_df, by = c("RecoveryState" = "State", "Year")) %>%
+  left_join(acs, by = c("RecoveryState" = "State"))
+
 # Remove Unneccesary Intermediates ----------------------------------------
 
 rm(NCIC_text, NCIC_names, NCIC_list)
+
+
+# Some Modeling -----------------------------------------------------------
+
+df <- select(df_joined, RecoveryState, starts_with('X__'), `Gun Rights`, home_away_rate)
+
+df[,2:27] <-  data.frame(sapply(df[,2:27],as.numeric))
+
+df_distinct <- 
+  df %>%
+  group_by(RecoveryState) %>%
+  summarize_all(mean)
+
+fit1 <- lm(home_away_rate ~ .-RecoveryState, data= df_distinct)
+
+fit1
+summary(fit1)
+
+fit2 <- hclust(dist(df_distinct[,2:27]))
+plot(fit2)
+
+x <- bind_cols(df_distinct[,1], data.frame(group = cutree(fit2, 4))) %>% arrange((group)) 
+
+
+ggplot(data = df_distinct, aes(x = `Gun Rights`, y = home_away_rate)) +
+  geom_point(aes(color = as.character(cutree(fit2, 2))))
+         
