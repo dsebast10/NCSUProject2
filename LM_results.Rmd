@@ -1,0 +1,18 @@
+---
+title: "Multi Linear Regression Model Results"
+output: html_notebook
+---
+
+# Final Model
+```{r}
+summary(M_step)
+```
+
+The model has an adjusted R^2 of `r signif(summary(M_step)$adj.r.squared, 3)` which is fairly good. That is a large portion of the variance in intra-state recovery ratios being explained by the legal environment.
+
+The specific variables that the model chose do not necessarily make the most sense when thinking about trafficking. We might expect laws about Background Checks, and regulation of Dealers to have the greatest impact. It is possible that some of these variables are highly co-linear with some of the variables that were included in the model already and therefore were not chosen. 
+
+The most consequential variable turned out to be the Assault Weapons ban. Again, this doesn't make too much sense. The vast majority of guns traced are handguns. (Unfortunately, while the ATF does release data on the types of guns recovered, that data is released in aggregate so we can't pin down if the guns coming into states are more likely to be assault weapons) 
+
+It is important to remember that all of these indicies from Cato are very made up, with little thought to them, other than to chide states with stronger gun laws.
+

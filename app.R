@@ -33,7 +33,7 @@ ui <- dashboardPage(skin = "red",
       menuItem("Gun Laws", tabName = "cato", icon = icon("crosshairs")),
       menuItem("Linear Models", tabName = "linear", icon = icon("line-chart")),
       menuItem("Tree Model", tabName = "tree", icon = icon("tree")),
-      #menuItem("Non-parametric Model", tabName = "pca", icon = icon("compass")),
+      menuItem("PCA", tabName = "pca", icon = icon("compass")),
       h3(" Filters"),
       selectizeInput("state",
                      "Select Recovery State",
@@ -95,14 +95,19 @@ ui <- dashboardPage(skin = "red",
                     for 'Gun Rights' and the percentage of guns recovered in a state and traced to the same state.
                     As you see below, all the indicies have positive relationships with the fraction of guns 
                     purchased and recovered in the same state. Another way to think of that is: 
-                    'The more stringent the gun laws the more guns that come from other states.'")
+                    'The more stringent the gun laws the more guns that come from other states.'
+                    It is important to note that the methodology behind the indicies is unclear at best and 
+                    partisan grandstanding at worst. They apply arbitrary values for the presence of certain
+                    gun laws and then take a z-score of a binomial or multi-nomial distribution they just created.")
                 ),
                 fluidRow(
                   box(plotOutput("cato_charts", height = "700px"), width = 12)
                 )
               )),
       tabItem(tabName = "linear",
-              fluidPage(box(includeMarkdown('LM_selection.md')))),
+              fluidPage(box(includeMarkdown('LM_selection.md')),
+                        box(includeMarkdown("LM_results.md"))
+                        )),
       
       tabItem(tabName = "tree",
               fluidPage(
@@ -131,7 +136,20 @@ ui <- dashboardPage(skin = "red",
                     but have done so in widely varying legislation. It is also evident that there is a notable effect on the 
                     availability of guns, that is filled by neighboring jurisdictions.")
                 )
-              ))
+              )),
+      tabItem(tabName = "pca",
+              fluidPage(
+                fluidRow(
+                  box(plotOutput('PCA1')),
+                  box(plotOutput('PCA2'))
+                  ),
+                fluidRow(
+                  box("The Biplot above shows that the variables share similar relationships to each other and there is a lot of multi-collinearity
+                      going on here."),
+                  box("The plot above shows that the bast majority of the Variance can be explained with just two or three principal components.
+                      This makes sense because most of the measures are of very similar items.")
+                )
+                ))
     )
   )
 )
@@ -422,6 +440,16 @@ server <- function(input, output, session){
       
   })
   
+  output$PCA1 <- renderPlot({
+    guns_pca <- prcomp(df_means[,2:28], scale = T, center = T)
+    biplot(guns_pca, cex = .5)
+  })
+  
+  output$PCA2 <- renderPlot({
+    guns_pca <- prcomp(df_means[,2:28], scale = T, center = T)
+    plot(guns_pca$sdev^2/sum(guns_pca$sdev^2), xlab = "Principal Component",
+         ylab = "Proportion of Variance Explained", ylim = c(0,1), type = 'b')
+  })
 }
 
 # APP ---------------------------------------------------------------------
