@@ -54,7 +54,7 @@ Make sure to use the Radio Buttons on the left to change the data displayed on t
 
 # Project Synopsis
 
-The goal of this project is to show how 
+The goal of this project is to show how gun laws in states can affect the trafficking of guns in and around those states. 
 
 # Data {.tabset}
 

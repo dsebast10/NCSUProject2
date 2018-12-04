@@ -66,7 +66,7 @@ NCIC_df <-
 cato <- read_xlsx("Data/Freedom_In_The_50_States_2018.xlsx", sheet = "Personal") %>%
   select(X__1:`Gun Rights`) %>%
   mutate(State = str_to_upper(X__1),
-         Year = as.numeric(X__2)) %>%
+         Year = as.numeric(X__2))
   
 
 # State Populations -------------------------------------------------------
@@ -95,11 +95,23 @@ recovery_rates <- inner_join(home_recoveries, away_recoveries,
                              by = c("RecoveryState", "Year")) %>%
   mutate(home_away_rate = HomeGuns/(AwayGuns+HomeGuns))
 
+# Duplicate For Sources
+
+# away_sources <- 
+#   traces %>%
+#   filter(RecoveryState != SourceState) %>%
+#   group_by(SourceState, Year) %>%
+#   summarize(AwaySource = sum(Guns))
+# 
+# source_rates <- inner_join(home_recoveries, away_sources, 
+#                              by = c("SourceState", "Year")) %>%
+#   mutate(away_source_rate = AwaySource/(AwaySource+HomeGuns))
+
 # Combine to One Dataset --------------------------------------------------
 
 df_joined <- inner_join(recovery_rates, select(cato, -X__1, -X__2), by = c('RecoveryState' = "State", "Year")) %>%
   inner_join(NCIC_df, by = c("RecoveryState" = "State", "Year")) %>%
-  left_join(acs, by = c("RecoveryState" = "State"))
+  left_join(acs, by = c("RecoveryState" = "State")) 
 
 # Remove Unneccesary Intermediates ----------------------------------------
 
@@ -109,25 +121,56 @@ rm(NCIC_text, NCIC_names, NCIC_list)
 # Some Modeling -----------------------------------------------------------
 
 df <- select(df_joined, RecoveryState, starts_with('X__'), `Gun Rights`, home_away_rate)
+df_names <- c("State",
+              "Initial Permit Cost",
+              "Training or Testing Requirement for Carry Permit",
+              "Initial Permit Term",
+              "Open Carry Index",
+              "Concelaed Carry Index",
+              "Assault Weapons Ban",
+              "Design Safety Standards",
+              "Large Capacity Magazine Ban",
+              "50 Caliber Ban",
+              "Local Gun Ban",
+              "Stricter Minimum Age",
+              "Waiting Period",
+              "Restrictions on multiple purchases",
+              "Licensing or Regulation of Dealers",
+              "Background Checks for Private Sales",
+              "Firearms Licensing Index",
+              "Registration of Firearms",
+              "Built in Locking Devices Required",
+              "Microstamping",
+              "Stand Your Ground Law",
+              "Machine Guns Prohibited",
+              "Silencers Prohibited",
+              "Short Barreled Rifle Prohibited",
+              "Short Barreled Shotgun Prohibited",
+              "Retention of Sales Records",
+              "Gun Rights",
+              "Rate of Home Recoveries")
 
 df[,2:27] <-  data.frame(sapply(df[,2:27],as.numeric))
+colnames(df[,2:26]) <-  NULL
+colnames(df) <- df_names
 
-df_distinct <- 
+df_means <- 
   df %>%
-  group_by(RecoveryState) %>%
-  summarize_all(mean)
+  group_by(State) %>%
+  summarize_all(mean) %>%
+  mutate(Abbr = setNames(state.abb, State))
 
-fit1 <- lm(home_away_rate ~ .-RecoveryState, data= df_distinct)
-
-fit1
-summary(fit1)
-
-fit2 <- hclust(dist(df_distinct[,2:27]))
-plot(fit2)
-
-x <- bind_cols(df_distinct[,1], data.frame(group = cutree(fit2, 4))) %>% arrange((group)) 
-
-
-ggplot(data = df_distinct, aes(x = `Gun Rights`, y = home_away_rate)) +
-  geom_point(aes(color = as.character(cutree(fit2, 2))))
+# fit1 <- lm(home_away_rate ~ .-RecoveryState, data= df_distinct)
+# 
+# fit1
+# summary(fit1)
+# 
+# fit2 <- hclust(dist(df_distinct[,2:27]))
+# plot(fit2)
+# 
+# x <- bind_cols(df_distinct[,1], data.frame(group = cutree(fit2, 4))) %>% arrange((group)) 
+# 
+# 
+# ggplot(data = df_distinct, aes(x = `Gun Rights`, y = home_away_rate)) +
+#   geom_point(aes(color = as.character(cutree(fit2, 2))))
          

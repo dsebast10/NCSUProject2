@@ -7,7 +7,6 @@ library(readxl)
 library(plotly)
 library(magrittr)
 library(DT)
-library(processx)
 library(pdftools)
 
 
@@ -29,8 +28,12 @@ ui <- dashboardPage(skin = "red",
                    "Choose Data to Display on Map",
                    choices = c("Source States", "Recovery States")),
       menuItem("Map", tabName = "map", icon = icon("map")),
-      menuItem("Time Chart", tabName = "chart", icon = icon("line-chart")),
+      menuItem("Time Chart", tabName = "chart", icon = icon("calendar")),
       menuItem("Data Table", tabName = "table", icon = icon("table")),
+      menuItem("Gun Laws", tabName = "cato", icon = icon("crosshairs")),
+      menuItem("Linear Models", tabName = "linear", icon = icon("line-chart")),
+      menuItem("Tree Model", tabName = "tree", icon = icon("tree")),
+      #menuItem("Non-parametric Model", tabName = "pca", icon = icon("compass")),
       h3(" Filters"),
       selectizeInput("state",
                      "Select Recovery State",
@@ -38,8 +41,13 @@ ui <- dashboardPage(skin = "red",
                      choices = levels(as.factor(traces$`RecoveryState`))),
       checkboxInput("exclude_state", "Exclude selected State in totals?"),
       sliderInput("years", "Years", min = 2010, max = 2017, value = c(2010, 2017), step = 1, sep = ""),
-      h4("Download Full Cleaned Dataset"),
-      downloadButton('downloadData', 'Download')
+      h4("Download Full Cleaned Trace Dataset"),
+      downloadButton('downloadData', 'Download'),
+      # h4("Download Cato Dataset"),
+      # downloadButton('downloadCato', 'Download Cato'),
+      # h4("Download NCIC Dataset"),
+      # downloadButton('downloadNCIC','Download NCIC')
+      h4()
     )
   ),
   dashboardBody(
@@ -47,7 +55,7 @@ ui <- dashboardPage(skin = "red",
       tabItem(tabName = "intro",
               fluidPage(
                 box(
-                  htmlOutput(intro_html),
+                  htmlOutput("intro_html"),
                   width = 12
                 )
               )),
@@ -76,6 +84,30 @@ ui <- dashboardPage(skin = "red",
               fluidPage(fluidRow(box(h2(textOutput("table_title")), align='center'),
                                  box(downloadButton("downloadSubsetData", "Download Data Displayed"))),
                         fluidRow(box(DT::dataTableOutput("cross_tab")))
+              )),
+      tabItem(tabName = "cato",
+              fluidPage(fluidRow(
+                box(selectizeInput("cato_factor",
+                                          "Select Cato Factor to Model",
+                                          selected = "Gun Rights",
+                                          choices = colnames(df_means))),
+                box("This chart shows the relationship between various Cato Institute Indicies 
+                    for 'Gun Rights' and the percentage of guns recovered in a state and traced to the same state.
+                    As you see below, all the indicies have positive relationships with the fraction of guns 
+                    purchased and recovered in the same state. Another way to think of that is: 
+                    'The more stringent the gun laws the more guns that come from other states.'")),
+                fluidRow(
+                  box(plotOutput("cato_charts", height = "700px"), width = 12)
+                )
+              )),
+      tabItem(tabName = "linear",
+              fluidPage()),
+      
+      tabItem(tabName = "tree",
+              fluidPage(
+                fluidRow(
+                  box(plotOutput("clustering_chart"))
+                )
               ))
     )
   )
@@ -152,9 +184,23 @@ server <- function(input, output, session){
     }
   )
   
+  output$downloadCato <- downloadHandler(
+    filename = function() {"CATO Gun Rights Indicies.csv"},
+    content = function(fname){
+      write.csv(cato, fname, row.names = F)
+    }
+  )
+  
+  output$downloadNCIC <- downloadHandler(
+    filename = function() {"NCIC_background_checks.csv"},
+    content = function(fname){
+      write.csv(NCIC_df, fname, row.names = F)
+    }
+  )
+  
   #setting up html output
   getPage<-function() {
-    return(includeText("intro_page.html"))
+    return(includeHTML("intro_page.html"))
   }
   
   #Grabbing the output intro from .html that was written with R Markdown
@@ -317,6 +363,31 @@ server <- function(input, output, session){
       }
     }
   )
+  
+  output$cato_charts <- renderPlot({
+    m <- lm(`Rate of Home Recoveries`~df_means[[input$cato_factor]], data = df_means)
+    a <- signif(coef(m)[1], 2)
+    b <- signif(coef(m)[2], 2)
+    r2 <- signif(summary(m)$r.squared, 3)
+    textlab <- paste0("y = ", b , "x + ", a, "; R^2", " = ", r2)
+    
+    ggplot(data = df_means, aes(x = df_means[[input$cato_factor]], y = `Rate of Home Recoveries`)) +
+      geom_smooth(method = "lm") +
+      geom_text(aes(label = Abbr)) +
+      xlab(paste(input$cato_factor)) +
+      ylab("Fraction of Recovered Guns Traced to Same Source State") +
+      geom_text(aes(x = 0, y = .2, label = textlab))
+      
+  })
+  
+  output$clustering_chart <- renderPlot({
+    clust1 <- hclust(dist(df_means[,2:28])) 
+    ggplot(data = df_means, aes(x = df_means$`Gun Rights`, y = `Rate of Home Recoveries`)) +
+      geom_point(aes(col = as.character(cutree(clust1,2)), size = 2)) +
+      geom_text(aes(label = Abbr))
+      
+  })
+  
 }
 
 # APP ---------------------------------------------------------------------
