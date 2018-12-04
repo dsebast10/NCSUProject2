@@ -1,0 +1,38 @@
+---
+title: "Multiple Linear Regression Model Selection"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Goal
+
+We want to model how the ratio of intra-state gun traces to total gun traces in each state is affected by gun laws in those states.
+
+The ratio of intra-state gun traces to total gun traces is being used as a measure of the availabilty of guns in that state. If guns are not very available to residents, they will be more likely to get guns from other states, sometimes through illegal means.
+
+# Models
+
+## Null Model
+```{r}
+m_null <- lm(data = df_means, `Rate of Home Recoveries`~1)
+summary(m_null)
+```
+
+
+## Full Model
+```{r}
+m <- lm(data = df_means, `Rate of Home Recoveries`~.-Abbr-State)
+summary(m)
+```
+
+# Now use Forward Model Selection to choose only the Variables that help
+```{r message = F}
+M_step <- step(object=m_null, scope = list(lower=m_null, upper = m), direction = "forward")
+```
+The resulting model is given below
+```{r}
+summary(M_step)
+```
+
+

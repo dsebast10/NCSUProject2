@@ -46,7 +46,7 @@ ui <- dashboardPage(skin = "red",
       # h4("Download Cato Dataset"),
       # downloadButton('downloadCato', 'Download Cato'),
       # h4("Download NCIC Dataset"),
-      # downloadButton('downloadNCIC','Download NCIC')
+      # downloadButton('downloadNCIC','Download NCIC'),
       h4()
     )
   ),
@@ -95,18 +95,41 @@ ui <- dashboardPage(skin = "red",
                     for 'Gun Rights' and the percentage of guns recovered in a state and traced to the same state.
                     As you see below, all the indicies have positive relationships with the fraction of guns 
                     purchased and recovered in the same state. Another way to think of that is: 
-                    'The more stringent the gun laws the more guns that come from other states.'")),
+                    'The more stringent the gun laws the more guns that come from other states.'")
+                ),
                 fluidRow(
                   box(plotOutput("cato_charts", height = "700px"), width = 12)
                 )
               )),
       tabItem(tabName = "linear",
-              fluidPage()),
+              fluidPage(box(includeMarkdown('LM_selection.md')))),
       
       tabItem(tabName = "tree",
               fluidPage(
                 fluidRow(
+                  box(
+                    sliderInput("cluster_k", 
+                                label = "Choose Number of Clusters",
+                                min = 2, max = 25, value = 2)
+                    ),
+                  box(selectizeInput("cato_factor2",
+                                     "Select Cato Factor to Model",
+                                     selected = "Gun Rights",
+                                     choices = colnames(df_means)))
+                  ),
+                fluidRow(
+                  box(plotOutput("dendrogram")),
                   box(plotOutput("clustering_chart"))
+                ),
+                fluidRow(
+                  box("Here you can see a Hierarchical Clustering using all available CATO variables and the rate of intra-state recoveries.
+                      It clearly shows that there are two distinct groups, States that have stricter guns laws and those that don't. 
+                      Generally, the nine states that have the stricter gun laws (CA, CT< HI, IL, MA, MD, NJ, NY, RI) also have fewer 
+                      intra-state traces meaning that a larger fraction of the guns recovered there come from states with laxer gun laws."),
+                  box("The biggest takeaway from this is that the vast majority of states have very similar and permissive
+                    gun laws. The few states that have tried to implement forms of gun control have had some success,
+                    but have done so in widely varying legislation. It is also evident that there is a notable effect on the 
+                    availability of guns, that is filled by neighboring jurisdictions.")
                 )
               ))
     )
@@ -380,11 +403,22 @@ server <- function(input, output, session){
       
   })
   
+  output$dendrogram <- renderPlot({
+    clust1 <- hclust(dist(df_means[,2:28]))
+    midpoint <- (clust1$height[nrow(df_means)- input$cluster_k] + clust1$height[nrow(df_means)-input$cluster_k +1])/2
+    plot(clust1)
+    abline(h=midpoint, col = 'red')
+  })
+  
   output$clustering_chart <- renderPlot({
     clust1 <- hclust(dist(df_means[,2:28])) 
-    ggplot(data = df_means, aes(x = df_means$`Gun Rights`, y = `Rate of Home Recoveries`)) +
-      geom_point(aes(col = as.character(cutree(clust1,2)), size = 2)) +
-      geom_text(aes(label = Abbr))
+    ggplot(data = df_means, aes(x = df_means[[input$cato_factor2]], y = `Rate of Home Recoveries`)) +
+      geom_point(aes(col = as.character(cutree(clust1,input$cluster_k)), size = 2)) +
+      geom_text(aes(label = Abbr))+
+      xlab(paste(input$cato_factor2)) +
+      scale_color_discrete(name = "Clusters") + 
+      scale_size_continuous(guide=F)
+      
       
   })
   
